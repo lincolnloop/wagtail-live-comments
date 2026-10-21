@@ -1,0 +1,23 @@
+{% load wagtailcore_tags wagtailuserbar %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ page.title }}</title>
+  </head>
+  <body>
+    <main>
+      <h1>{{ page.title }}</h1>
+      {% for block in page.body %}
+        {% include_block block %}
+      {% endfor %}
+    </main>
+    <aside>
+      {% for block in page.sidebar %}
+        {% include_block block %}
+      {% endfor %}
+    </aside>
+    {% wagtailuserbar %}
+  </body>
+</html>

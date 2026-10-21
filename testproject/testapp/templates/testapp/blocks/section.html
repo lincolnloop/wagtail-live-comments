@@ -1,0 +1,7 @@
+{% load wagtailcore_tags %}
+
+<section class="section section--{{ value.style }}">
+  {% for child in value.content %}
+    {% include_block child %}
+  {% endfor %}
+</section>

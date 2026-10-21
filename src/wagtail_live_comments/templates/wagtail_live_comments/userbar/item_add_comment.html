@@ -1,0 +1,19 @@
+{% extends "wagtailadmin/userbar/item_base.html" %}
+
+{% load i18n wagtailadmin_tags %}
+
+{% block item_content %}
+  {# The script reads this from the userbar's shadow root. #}
+  {{ live_comments_config|json_script:"wagtail-live-comments-config" }}
+  {# Match Wagtail 7.4 userbar items (see item_page_edit.html) plus docs `class="action"`. #}
+  <a href="#" target="_parent" role="menuitem" class="action" data-live-page-comment-trigger aria-pressed="false">
+    {# Userbar sprite has no comment symbol; define it in this shadow tree. #}
+    <svg class="w-hidden" hidden aria-hidden="true">
+      <defs>
+      {% include "wagtailadmin/icons/comment.svg" %}
+      </defs>
+    </svg>
+    {% icon name="comment" classname="w-action-icon" %}
+    {% trans "Add a Comment" %}
+  </a>
+{% endblock %}

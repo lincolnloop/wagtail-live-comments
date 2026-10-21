@@ -1,0 +1,725 @@
+/* Targeting overlay for live-page comments. IDs live on the block root. */
+
+html[data-live-page-comment-targeting] [data-block-id][data-commentable],
+html[data-live-page-comment-targeting] [data-block-id][data-commentable] * {
+  cursor: copy !important;
+}
+
+html[data-live-page-comment-targeting] [data-block-id][data-commentable]:hover,
+html[data-live-page-comment-targeting] [data-block-id][data-commentable]:focus,
+html[data-live-page-comment-targeting] [data-block-id][data-commentable]:focus-visible,
+html[data-live-page-comment-targeting] [data-block-id][data-commentable][data-comment-selected] {
+  /* Inset ring survives overflow:hidden on cards; outline shows the full region. */
+  outline: 2px dashed var(--w-color-secondary, #007d7e);
+  outline-offset: 3px;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--w-color-secondary, #007d7e) 70%, transparent);
+}
+
+html[data-live-page-comment-targeting]
+  [data-block-id][data-commentable]:has([data-block-id][data-commentable]:hover),
+html[data-live-page-comment-targeting]
+  [data-block-id][data-commentable]:has([data-block-id][data-commentable]:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+html[data-live-page-comment-targeting] [data-block-id][data-commentable][data-comment-selected] {
+  outline: 3px solid var(--w-color-secondary, #007d7e);
+  outline-offset: 3px;
+  box-shadow:
+    inset 0 0 0 3px var(--w-color-secondary, #007d7e),
+    0 0 0 6px color-mix(in srgb, var(--w-color-secondary, #007d7e) 20%, transparent);
+}
+
+/* Rendered blocks the latest draft dropped: visibly out of reach while targeting. */
+html[data-live-page-comment-targeting] [data-block-id][data-comment-unavailable],
+html[data-live-page-comment-targeting] [data-block-id][data-comment-unavailable] * {
+  cursor: not-allowed !important;
+}
+
+html[data-live-page-comment-targeting] [data-block-id][data-comment-unavailable] {
+  outline: 1px dotted color-mix(in srgb, currentColor 45%, transparent);
+  outline-offset: 3px;
+}
+
+.w-userbar__item [data-live-page-comment-trigger][aria-pressed="true"],
+.w-userbar__item [data-live-page-comment-trigger][aria-pressed="true"]:hover,
+.w-userbar__item [data-live-page-comment-trigger][aria-pressed="true"]:focus {
+  background-color: var(--w-color-surface-menu-item-active);
+  color: var(--w-color-text-label-menus-active, #fff);
+}
+
+.w-userbar__item [data-live-page-comment-trigger][aria-pressed="true"] .icon,
+.w-userbar__item [data-live-page-comment-trigger][aria-pressed="true"] .w-action-icon {
+  color: inherit;
+  fill: currentColor;
+  opacity: 1;
+}
+
+/*
+ * Native <dialog> plus Wagtail core.css (.w-dialog, .w-field, .button) in the
+ * userbar shadow. Author .w-dialog { display:flex } would otherwise keep a
+ * closed dialog visible.
+ */
+[data-live-page-comment-dialog]:not([open]) {
+  display: none;
+}
+
+[data-live-page-comment-dialog][open] {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+[data-live-page-comment-dialog][open] .w-dialog__box,
+[data-live-page-comment-dialog][open] .w-dialog__box * {
+  pointer-events: auto;
+}
+
+[data-live-page-comment-dialog] textarea {
+  cursor: text;
+  caret-color: currentColor;
+}
+
+[data-live-page-comment-dialog]::backdrop {
+  background: var(--w-color-black-50, rgb(0 0 0 / 50%));
+}
+
+[data-live-page-comment-error][hidden] {
+  display: none;
+}
+
+[data-live-page-comment-host] {
+  position: relative;
+}
+
+#live-page-comment-popovers {
+  display: contents;
+}
+
+/*
+ * Above every in-content layer (stretched links like the navigation tile's
+ * `absolute inset-0 z-10` overlay and its z-20 arrow), below site chrome
+ * (menus, dialogs, drawers and toasts are z-50). Lower, and a full-card link
+ * covers the pin: it stays visible but the click follows the link.
+ */
+[data-live-page-comment-pin] {
+  position: absolute;
+  z-index: 40;
+}
+
+[data-live-page-comment-pin][data-live-page-comment-pin-placed] {
+  top: var(--live-page-comment-y);
+  left: var(--live-page-comment-x);
+  transform: translate(-50%, -50%);
+}
+
+[data-live-page-comment-pin]:not([data-live-page-comment-pin-placed]) {
+  inset-block-start: calc(0.5rem + var(--live-page-comment-fallback-offset, 0rem));
+  inset-inline-end: 0.5rem;
+}
+
+.live-page-comment-pill {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.375rem;
+  background: var(--w-color-surface-page, #fff);
+  color: var(--w-color-text-meta, #5c5c5c);
+  box-shadow:
+    0 0 1px 0 var(--w-color-secondary-75, #6bd6e6),
+    0 1px 10px 0 color-mix(in srgb, var(--w-color-secondary-75, #6bd6e6) 70%, transparent);
+  cursor: pointer;
+}
+
+.live-page-comment-pill:hover,
+.live-page-comment-pill:focus-visible,
+.live-page-comment-pill[aria-expanded="true"] {
+  color: var(--w-color-text-label, #262626);
+}
+
+.live-page-comment-pill:focus-visible {
+  outline: 3px solid var(--w-color-focus, #00a2d6);
+  outline-offset: 2px;
+}
+
+.live-page-comment-pill__icon {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: currentColor;
+}
+
+.live-page-comment-pill__counter {
+  position: absolute;
+  inset-block-start: -0.35rem;
+  inset-inline-end: -0.35rem;
+  box-sizing: border-box;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--w-color-surface-page, #fff);
+  border-radius: 1rem;
+  background: var(--w-color-surface-button-default, #2e1f5e);
+  color: var(--w-color-text-button, #fff);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1rem;
+  text-align: center;
+}
+
+@position-try --live-page-comment-popover-in-view {
+  position-area: none;
+  inset: auto;
+  top: calc(anchor(bottom) + 0.5rem);
+  right: auto;
+  bottom: auto;
+  left: clamp(0.5rem, anchor(center) - 208px, calc(100vw - 26rem - 0.5rem));
+}
+
+/*
+ * Wagtail 7.4 .w-theme-dark tokens + dialog/field/button rules, copied so
+ * live-page chrome matches the admin "Add a comment" dialog even when
+ * host page CSS wins specificity.
+ */
+[data-live-page-comment-dialog],
+.live-page-comment-popover {
+  --w-color-white: hsl(0 0% 100%);
+  --w-color-secondary: hsl(180.5 100% 24.7%);
+  --w-color-secondary-100: hsl(180.3 100% 34.7%);
+  --w-color-secondary-400: hsl(181.9 100% 18.4%);
+  --w-color-grey-50: hsl(0 0% 96.9%);
+  --w-color-grey-150: hsl(0 0% 78.4%);
+  --w-color-grey-200: hsl(0 0% 57.3%);
+  --w-color-grey-400: hsl(0 0% 36.1%);
+  --w-color-grey-500: hsl(0 0% 20%);
+  --w-color-grey-600: hsl(0 0% 14.9%);
+  --w-color-grey-700: hsl(0 0% 13.3%);
+  --w-color-grey-800: hsl(0 0% 11.4%);
+  --w-color-white-80: #fffc;
+  --w-color-black-10: #0000001a;
+  --w-color-black-25: #0003;
+  --w-color-focus: #00a885;
+  --w-color-surface-page: var(--w-color-grey-600);
+  --w-color-surface-field: var(--w-color-grey-600);
+  --w-color-surface-button-default: var(--w-color-secondary);
+  --w-color-surface-button-hover: var(--w-color-secondary-400);
+  --w-color-surface-button-outline-hover: var(--w-color-grey-700);
+  --w-color-surface-menus: var(--w-color-grey-800);
+  --w-color-text-button: var(--w-color-white);
+  --w-color-text-label: var(--w-color-grey-150);
+  --w-color-text-context: var(--w-color-grey-50);
+  --w-color-text-meta: var(--w-color-grey-150);
+  --w-color-text-placeholder: var(--w-color-grey-200);
+  --w-color-text-button-outline-default: var(--w-color-secondary-100);
+  --w-color-text-button-outline-hover: var(--w-color-secondary-100);
+  --w-color-text-label-menus-default: var(--w-color-white-80);
+  --w-color-icon-primary: var(--w-color-grey-150);
+  --w-color-border-furniture: var(--w-color-grey-500);
+  --w-color-border-field-default: var(--w-color-grey-400);
+  --w-color-border-field-hover: var(--w-color-secondary-100);
+  --w-color-border-button-outline-default: var(--w-color-secondary-100);
+  --w-color-border-button-outline-hover: var(--w-color-secondary-100);
+  --w-color-border-button-small-outline-default: var(--w-color-grey-400);
+  --w-color-box-shadow-md: var(--w-color-black-25);
+  --w-font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: var(--w-color-text-context);
+  font-family: var(--w-font-sans);
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+
+[data-live-page-comment-dialog] .w-dialog__box,
+.live-page-comment-popover .comment {
+  background: var(--w-color-surface-page);
+  border-radius: 0.625rem;
+  box-shadow: 5px 5px 30px var(--w-color-box-shadow-md);
+  color: var(--w-color-text-context);
+}
+
+[data-live-page-comment-dialog] .w-dialog__title,
+[data-live-page-comment-dialog] .w-h1 {
+  color: var(--w-color-text-label);
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+[data-live-page-comment-dialog] .w-dialog__subtitle,
+[data-live-page-comment-dialog] .w-help-text {
+  color: var(--w-color-text-meta);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+[data-live-page-comment-dialog] .w-field__label {
+  color: var(--w-color-text-label);
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+[data-live-page-comment-dialog] textarea,
+.live-page-comment-popover textarea {
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.625rem;
+  margin: 0;
+  padding: 0.375rem 1.25rem;
+  border: 1px solid var(--w-color-border-field-default);
+  border-radius: 0.3125rem;
+  background-color: var(--w-color-surface-field);
+  color: var(--w-color-text-context);
+  font-family: inherit;
+  font-size: 1.1875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+[data-live-page-comment-dialog] textarea:hover,
+[data-live-page-comment-dialog] textarea:focus,
+.live-page-comment-popover textarea:hover,
+.live-page-comment-popover textarea:focus {
+  border-color: var(--w-color-border-field-hover);
+  outline: none;
+}
+
+[data-live-page-comment-dialog] textarea:focus,
+.live-page-comment-popover textarea:focus {
+  box-shadow: 0 0 0 1px var(--w-color-border-field-hover);
+}
+
+[data-live-page-comment-dialog] textarea::placeholder,
+.live-page-comment-popover textarea::placeholder {
+  color: var(--w-color-text-placeholder);
+  opacity: 1;
+}
+
+[data-live-page-comment-dialog] .button,
+.live-page-comment-popover .button {
+  -moz-appearance: none;
+  appearance: none;
+  display: inline-block;
+  height: 2.25em;
+  padding: 0 1em;
+  border: 1px solid var(--w-color-surface-button-default);
+  border-radius: 0.1875rem;
+  background-color: var(--w-color-surface-button-default);
+  color: var(--w-color-text-button);
+  font-family: var(--w-font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: calc(2.25em - 2px);
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  overflow: hidden;
+  outline-offset: 3px;
+  transition: background-color 0.1s ease;
+}
+
+[data-live-page-comment-dialog] .button:hover,
+.live-page-comment-popover .button:hover {
+  background-color: var(--w-color-surface-button-hover);
+  border-color: var(--w-color-surface-button-hover);
+}
+
+[data-live-page-comment-dialog] .button.button-secondary,
+.live-page-comment-popover .button.button-secondary {
+  background-color: initial;
+  border-color: var(--w-color-border-button-outline-default);
+  color: var(--w-color-text-button-outline-default);
+}
+
+[data-live-page-comment-dialog] .button.button-secondary:hover,
+.live-page-comment-popover .button.button-secondary:hover {
+  background-color: var(--w-color-surface-button-outline-hover);
+  border-color: var(--w-color-border-button-outline-hover);
+  color: var(--w-color-text-button-outline-hover);
+}
+
+[data-live-page-comment-dialog] .button:disabled,
+.live-page-comment-popover .button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+[data-live-page-comment-dialog] .w-flex {
+  display: flex;
+}
+
+[data-live-page-comment-dialog] .w-justify-end {
+  justify-content: flex-end;
+}
+
+[data-live-page-comment-dialog] .w-gap-2 {
+  gap: 0.5rem;
+}
+
+.live-page-comment-popover {
+  position: fixed;
+  inset: auto;
+  z-index: 9990;
+  box-sizing: border-box;
+  width: min(26rem, calc(100vw - 1rem));
+  margin: 0;
+  margin-block-start: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  position-area: block-end;
+  position-try-fallbacks: flip-inline, flip-block, flip-start, --live-page-comment-popover-in-view;
+}
+
+.live-page-comment-popover p,
+.live-page-comment-popover ul,
+.live-page-comment-popover li,
+.live-page-comment-popover form,
+.live-page-comment-popover button,
+.live-page-comment-popover textarea,
+.live-page-comment-popover time {
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.live-page-comment-popover p {
+  margin: 0;
+}
+
+@supports not (position-area: block-end) {
+  .live-page-comment-popover {
+    top: calc(anchor(bottom) + 0.5rem);
+    right: auto;
+    bottom: auto;
+    left: clamp(0.5rem, anchor(center) - 208px, calc(100vw - 26rem - 0.5rem));
+    margin-block-start: 0;
+  }
+}
+
+@supports not (top: anchor(bottom)) {
+  .live-page-comment-popover {
+    position: absolute;
+    inset: auto;
+    inset-block-start: calc(100% + 0.5rem);
+    inset-inline-start: 0;
+  }
+}
+
+.live-page-comment-popover[hidden] {
+  display: none;
+}
+
+.live-page-comment-popover .comment {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-height: min(24rem, 70vh);
+  overflow: auto;
+  margin: 0;
+  padding: 2rem;
+  border: 0;
+  position: relative;
+  inset: auto;
+  pointer-events: auto;
+}
+
+.live-page-comment-popover .comment--focused {
+  background: var(--w-color-surface-page);
+}
+
+.live-page-comment-popover .comment-header {
+  position: relative;
+  min-height: 30px;
+}
+
+.live-page-comment-popover .comment--mode-deleting .comment-header,
+.live-page-comment-popover .comment-reply--mode-deleting .comment-header {
+  opacity: 0.5;
+}
+
+.live-page-comment-popover .comment-header__avatar {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  object-fit: cover;
+}
+
+.live-page-comment-popover .comment-header__author,
+.live-page-comment-popover .comment-header__date {
+  margin: 0;
+  margin-inline-start: 45px;
+  max-width: calc(100% - 110px);
+  color: var(--w-color-text-label);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 130%;
+}
+
+.live-page-comment-popover .comment-header__date {
+  color: var(--w-color-text-meta);
+}
+
+.live-page-comment-popover .comment-header__actions {
+  position: absolute;
+  inset-inline-end: 0;
+}
+
+.live-page-comment-popover .comment-header__action {
+  float: inline-start;
+  width: 30px;
+  height: 30px;
+  margin-inline-start: 5px;
+  border-radius: 5px;
+}
+
+.live-page-comment-popover .comment-header__action > details {
+  position: relative;
+}
+
+.live-page-comment-popover .comment-header__action > details > summary {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: unset;
+  border-radius: 0.1875rem;
+  background-color: unset;
+  color: var(--w-color-text-meta);
+  cursor: pointer;
+  list-style-type: none;
+}
+
+.live-page-comment-popover .comment-header__action > details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.live-page-comment-popover .comment-header__action > details > summary svg {
+  position: absolute;
+  top: 7.5px;
+  inset-inline-start: 7.5px;
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.live-page-comment-popover .comment-header__more-actions {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 35px;
+  z-index: 1000;
+  padding: 0;
+  border-radius: 3px;
+  background-color: var(--w-color-surface-menus);
+  color: var(--w-color-text-label-menus-default);
+  list-style: none;
+  text-align: start;
+}
+
+.live-page-comment-popover .comment-header__more-actions::before {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 100%;
+  inset-inline-end: 9px;
+  border: 6px solid transparent;
+  border-bottom: 6px solid var(--w-color-surface-menus);
+}
+
+.live-page-comment-popover .comment-header__more-actions button {
+  display: block;
+  width: 100px;
+  padding: 5px 10px;
+  border: 0;
+  background: none;
+  color: var(--w-color-text-label-menus-default);
+  cursor: pointer;
+  font-size: 13px;
+  text-align: start;
+}
+
+.live-page-comment-popover .comment__text {
+  margin: 0;
+  margin-bottom: 0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  color: var(--w-color-text-context);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.live-page-comment-popover .comment__replies {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.live-page-comment-popover .comment-reply {
+  margin: 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--w-color-border-furniture);
+}
+
+.live-page-comment-popover .comment form {
+  border-top: 1px solid var(--w-color-border-furniture);
+  padding-top: 1.25rem;
+}
+
+.live-page-comment-popover .comment--mode-creating form {
+  border-top: 0;
+  margin-top: 12px;
+  padding-top: 0;
+}
+
+.live-page-comment-popover .comment--mode-editing form {
+  margin-top: 12px;
+}
+
+.live-page-comment-popover .comment__reply-input {
+  margin-top: 0;
+}
+
+.live-page-comment-popover .comment__actions,
+.live-page-comment-popover .comment__reply-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  padding-bottom: 0;
+}
+
+.live-page-comment-popover .comment__button--goto-block {
+  margin-inline-end: auto;
+}
+
+.live-page-comment-popover .comment__confirm-delete,
+.live-page-comment-popover .comment__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 10px;
+  color: var(--w-color-text-context);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.live-page-comment-popover .comment__confirm-delete::after {
+  clear: both;
+  content: " ";
+  display: block;
+}
+
+.live-page-comment-popover .comment__progress {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+[data-live-page-comment-status] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* @mentions: highlighted tokens in comment text, and the "@" picker. */
+.live-page-comment-mention {
+  padding-inline: 0.125rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--w-color-secondary-100) 30%, transparent);
+  color: var(--w-color-text-context);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.live-page-comment-mentions {
+  box-sizing: border-box;
+  max-height: 12rem;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem;
+  overflow: auto;
+  border: 1px solid var(--w-color-border-field-default);
+  border-radius: 0.3125rem;
+  background: var(--w-color-surface-menus);
+  list-style: none;
+}
+
+/* Page editor: mounted on <body> under Wagtail's React-owned textarea. */
+.live-page-comment-mentions--floating {
+  position: fixed;
+  z-index: 1000;
+  box-shadow: 0 4px 12px var(--w-color-box-shadow-md, rgb(0 0 0 / 25%));
+}
+
+/* Page editor: resolved mentions in Wagtail's comment text (CSS Highlight API). */
+::highlight(wagtail-live-comments-mention) {
+  background-color: color-mix(in srgb, var(--w-color-secondary-100, #00b0b1) 30%, transparent);
+  color: inherit;
+}
+
+.live-page-comment-mentions__option,
+.live-page-comment-mentions__empty {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.25rem;
+  color: var(--w-color-text-label-menus-default);
+  font-size: 0.875rem;
+}
+
+.live-page-comment-mentions__option {
+  cursor: pointer;
+}
+
+.live-page-comment-mentions__option:hover,
+.live-page-comment-mentions__option[aria-selected="true"] {
+  background: var(--w-color-surface-button-outline-hover);
+  color: var(--w-color-text-context);
+}
+
+.live-page-comment-mentions__token,
+.live-page-comment-mentions__empty {
+  color: var(--w-color-text-meta);
+}
+
+@media (forced-colors: active) {
+  .live-page-comment-mention {
+    border: 1px solid CanvasText;
+  }
+
+  .live-page-comment-mentions__option[aria-selected="true"] {
+    outline: 2px solid Highlight;
+  }
+}

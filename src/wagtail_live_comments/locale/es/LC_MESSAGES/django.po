@@ -1,0 +1,13 @@
+# Spanish translation for wagtail-live-comments.
+msgid ""
+msgstr ""
+"Project-Id-Version: wagtail-live-comments\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/wagtail_live_comments/userbar/item_add_comment.html:18
+msgid "Add a Comment"
+msgstr "Añadir un comentario"

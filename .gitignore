@@ -1,0 +1,40 @@
+.DS_Store
+
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Code editors
+.cursor/
+.vscode/
+
+# Node.js
+node_modules/
+
+# Local dev server artefacts
+testapp/db.sqlite3
+testproject/testapp/db.sqlite3
+testapp/staticfiles/
+
+# Wagtail media (MEDIA_ROOT = testproject/media/). Renditions and documents are
+# regenerated; ignore everything in original_images/ except fixture files named in
+# tests/e2e/fixtures/test_data.json (add a ! line when the fixture references a new original).
+testproject/media/images/
+testproject/media/documents/
+testproject/media/original_images/*
+!testproject/media/original_images/7-800x600.png
+!testproject/media/original_images/avatar.png
+# Stray media if something ran with the wrong cwd (MEDIA_ROOT should be testproject/media/)
+/images/
+/original_images/
+
+# Tox
+.tox/

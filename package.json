@@ -1,0 +1,16 @@
+{
+  "name": "wagtail-live-comments",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test tests/frontend",
+    "test:watch": "bun test --watch tests/frontend",
+    "lint": "oxlint --fix src/wagtail_live_comments/static tests/frontend",
+    "lint:check": "oxlint src/wagtail_live_comments/static tests/frontend",
+    "format": "oxfmt src/wagtail_live_comments/static tests/frontend"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0"
+  }
+}

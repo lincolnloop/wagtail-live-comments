@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: extractions/setup-just@v3
+
+      - name: Install dependencies
+        run: |
+          uv sync --extra testing
+          bun install --frozen-lockfile
+
+      - name: Pre-commit (all files)
+        run: just pre-commit --all-files
+
+      - name: Lint (check-only)
+        run: just lint --no-fix
+
+      - name: Install Playwright Chromium + system deps (E2E)
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run all tests
+        run: just test-all
+
+      - name: Verify package builds
+        run: just build
+
+      - name: Upload dist (workflow artifact)
+        uses: actions/upload-artifact@v6
+        with:
+          name: dist-${{ github.run_id }}
+          path: dist/
+
+      - name: Upload Playwright / pytest artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-failures-${{ github.run_id }}
+          path: test-results/
+          if-no-files-found: ignore
+
+  tox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+      - uses: oven-sh/setup-bun@v2
+      - uses: extractions/setup-just@v3
+      - name: Install dependencies
+        run: |
+          uv sync --extra testing
+          bun install --frozen-lockfile
+      - name: Tox (multi Django/Wagtail)
+        run: just tox

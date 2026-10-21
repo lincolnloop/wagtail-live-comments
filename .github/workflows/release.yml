@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  # Uncomment when PyPI Trusted Publishing is configured (pypi.org → Publishing → Add pending publisher).
+  # id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Upload dist to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+      - name: Upload dist as workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: dist-${{ github.ref_name }}
+          path: dist/
+
+      # --- PyPI: uncomment after Trusted Publisher matches this workflow ---
+      # - name: Publish to PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #
+      # TestPyPI:
+      #   with:
+      #     repository-url: https://test.pypi.org/legacy/

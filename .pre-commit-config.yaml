@@ -1,0 +1,41 @@
+# https://pre-commit.com
+# Keep `ruff-pre-commit` rev aligned with `ruff` in [project.optional-dependencies] testing.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.6
+    hooks:
+      - id: ruff-format
+        files: ^(src/|tests/backend/|tests/e2e/|testproject/).+\.(py|pyi)$
+
+  - repo: local
+    hooks:
+      - id: djlint-reformat
+        name: djlint (reformat)
+        language: system
+        entry: uv run djlint --reformat
+        files: ^(src/wagtail_live_comments/templates/|testproject/).+\.html$
+      - id: oxfmt
+        name: oxfmt
+        language: system
+        entry: bunx oxfmt
+        files: ^(src/wagtail_live_comments/static/.+\.(js|css)|tests/frontend/.+\.js)$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^(src/|tests/backend/|tests/e2e/|testproject/).+\.(py|pyi)$
+
+  - repo: local
+    hooks:
+      - id: djlint-lint
+        name: djlint (lint)
+        language: system
+        entry: uv run djlint --lint
+        files: ^(src/wagtail_live_comments/templates/|testproject/).+\.html$
+      - id: oxlint
+        name: oxlint
+        language: system
+        entry: bunx oxlint --fix
+        files: ^(src/wagtail_live_comments/static/.+\.(js|css)|tests/frontend/.+\.js)$

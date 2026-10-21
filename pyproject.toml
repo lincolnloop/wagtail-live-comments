@@ -1,0 +1,205 @@
+[project]
+name = "wagtail-live-comments"
+version = "0.1.0"
+description = "Pin Wagtail comments on blocks of live and preview pages"
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+keywords = ["wagtail", "django", "cms", "comments", "review", "preview", "streamfield"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Web Environment",
+  "Framework :: Django",
+  "Framework :: Django :: 4.2",
+  "Framework :: Django :: 5.2",
+  "Framework :: Django :: 6.0",
+  "Framework :: Wagtail",
+  "Framework :: Wagtail :: 7",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+requires-python = ">=3.12"
+# 7.3 is the first Wagtail whose userbar items are Components with their own Media.
+dependencies = ["django>=4.2", "wagtail>=7.3"]
+
+[project.optional-dependencies]
+testing = [
+  "coverage[toml]>=7.0",
+  "djlint>=1.36.4",
+  "playwright>=1.40",
+  "pre-commit>=4.0",
+  "pytest>=8.0",
+  "pytest-django>=4.0",
+  "pytest-playwright>=0.4",
+  "pytest-xdist>=3.0",
+  "ruff>=0.15.6",
+  "setuptools>=82.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/lincolnloop/wagtail-live-comments"
+Repository = "https://github.com/lincolnloop/wagtail-live-comments"
+Changelog = "https://github.com/lincolnloop/wagtail-live-comments/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/lincolnloop/wagtail-live-comments/issues"
+
+[build-system]
+requires = ["uv_build>=0.10.11,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist =
+    py312-django{42,52}-wagtail73
+    py314-django60-wagtail7
+
+[testenv]
+runner = uv-venv-runner
+package = editable
+deps =
+    django42: Django>=4.2,<5.0
+    django52: Django>=5.2,<6.0
+    django60: Django>=6.0,<6.1
+    wagtail73: wagtail>=7.3,<7.4
+    wagtail7: wagtail>=7.3,<8.0
+    coverage[toml]>=7.0
+    pytest>=8.0
+    pytest-django>=4.0
+    pytest-xdist>=3.0
+    setuptools>=82.0.1
+commands =
+    pytest tests/backend {posargs}
+"""
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.backend.settings"
+pythonpath = [".", "testproject"]
+django_find_project = false
+filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
+
+[tool.coverage.run]
+source = ["wagtail_live_comments"]
+omit = ["tests/*", "testapp/*"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ruff]
+exclude = [
+  ".direnv",
+  ".git",
+  ".git-rewrite",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "build",
+  "dist",
+  "node_modules",
+]
+line-length = 120
+# Python: 4 spaces (Ruff format + check); HTML/JS/CSS use 2 spaces via djlint / oxfmt.
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = ["ISC001", "D203", "D213"]
+select = [
+  "ANN", # flake8-annotations
+  "ARG", # flake8-arguments
+  "B", # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "C90", # mccabe complexity
+  "D", # pydocstyle
+  "DJ", # flake8-django
+  "DTZ", # flake8-datetimez
+  "E", # pycodestyle
+  "EM", # flake8-errmsg
+  "F", # flake8
+  "G", # flake8-logging-format
+  "I", # isort
+  "ISC", # flake8-implicit-str-concat
+  "LOG", # flake8-logging
+  "N", # pep8-naming
+  "PIE", # flake8-pie
+  "PT", # flake8-pytest-style
+  "PTH", # flake8-use-pathlib
+  "RET", # flake8-return
+  "RUF", # ruff-specific rules
+  "Q", # flake8-quotes
+  "SIM", # flake8-simplify
+  "T10", # flake8-print
+  "TCH", # flake8-type-checking
+  "TRY", # tryceratops
+  "UP", # pyupgrade
+]
+fixable = ["ALL"]
+unfixable = []
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+# Tests and the demo Django project are not held to library-level docstrings/annotations.
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "ANN",
+  "ARG",
+  "D",
+  "EM101",
+  "PTH",
+  "PT",
+  "RET504",
+  "RUF002",
+  "RUF015",
+  "S101",
+  "TRY003",
+]
+# Demo site: long lines, pathlib style, and mutable defaults are acceptable here.
+"testproject/**" = [
+  "ANN",
+  "ARG",
+  "C901",
+  "D",
+  "EM101",
+  "E501",
+  "PTH",
+  "RET504",
+  "RUF002",
+  "RUF005",
+  "RUF012",
+  "RUF015",
+  "TRY003",
+]
+# TODO: Replace with explicit annotations and docstrings on the public API.
+"src/wagtail_live_comments/**" = ["ANN", "D"]
+"src/wagtail_live_comments/migrations/**" = ["E501", "RUF012"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.djlint]
+profile = "django"
+indent = 2
+indent_css = 2
+indent_js = 2
+# Formatter: ensure a blank line after these tags (`blank_line_before_tag` adds lines before tags).
+# Omit `block` — djlint would insert a blank line after every `{% block x %}`, including before body.
+# Omit `endblock` — djlint cannot limit that to “next line is {% block %}”; it also inserts blanks before HTML closers.
+blank_line_after_tag = "load,extends"
+# Keep Wagtail media tags on one line; djlint's break/format rules split them badly.
+ignore_blocks = "image,thumbnail, include_block"
+# Allow long class= / filter chains on a single {% … %} line (default 70 wraps attributes).
+max_attribute_length = 240
+# Demo/marketing templates use root paths and minimal head metadata; keep strict lint on library templates.
+ignore = "D018,H030,H031"
