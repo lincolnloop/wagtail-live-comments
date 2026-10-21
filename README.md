@@ -16,7 +16,7 @@ unchanged.
 
 ## Requirements
 
-Python 3.12+, Django 4.2+, Wagtail 7.3+ (the first release whose userbar items carry
+Python 3.12+, Django 4.2+, Wagtail 7.3+, wagtail-block-ids 0.1+ (the first release whose userbar items carry
 their own `Media`), with Wagtail comments on (`WAGTAILADMIN_COMMENTS_ENABLED`, the
 default).
 
@@ -53,10 +53,12 @@ element for editors.
 
 ## How it works
 
-- **Block ids.** For editors, `Page.serve` and `serve_preview` render with
-  `data-block-id` / `data-block-type` injected into the first tag of each block, nested
-  stream and list children included. Nothing wraps the block, so grid and flex layouts
-  are untouched.
+- **Block ids.** For editors, live and preview serves render with `data-block-id` /
+  `data-block-type` / `data-block-label` on the first tag of each block, nested stream
+  and list children included. The marking comes from
+  [wagtail-block-ids](https://github.com/lincolnloop/wagtail-block-ids); this package
+  registers a marker for users who can comment and never asks for wrappers, so grid and
+  flex layouts are untouched.
 - **Comments.** Creating a comment stores a Wagtail `Comment` whose `contentpath` points
   at a field inside the block on the latest draft. No revision is created. The pin point
   is kept in `CommentAnchor`, because the page editor rewrites `Comment.position` on
@@ -67,10 +69,11 @@ element for editors.
 
 ## Using with wagtail-inspect
 
-Both packages can be installed together. Each one leaves output alone if it already
-carries `data-block-id`, so they don't stamp the same block twice, whatever order the
-apps are in. This package doesn't depend on wagtail-inspect: the few helpers they share
-are copied here and marked `Duplicated from wagtail-inspect`.
+Both packages mark blocks through wagtail-block-ids, so each block is marked once
+whatever order the apps are in. Where wagtail-inspect is active (previews, and editors'
+live pages unless `WAGTAIL_INSPECT_LIVE_PAGES` is off), it asks for `display:contents`
+wrappers around blocks with several root elements. A wrapper has no box of its own,
+so pins on such blocks can be misplaced.
 
 ## Development
 

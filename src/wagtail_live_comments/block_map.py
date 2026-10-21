@@ -1,4 +1,4 @@
-"""StreamField block UUIDs and the comment contentpaths that point into them.
+"""Comment contentpaths that point into StreamField blocks.
 
 A contentpath is the dotted path Wagtail's editor uses to pin a comment on a form
 field, e.g. ``body.<section uuid>.content.<card uuid>.headline``. Every StreamField
@@ -15,10 +15,9 @@ from wagtail.blocks import ChoiceBlock, FieldBlock, ListBlock, StreamBlock, Stru
 from wagtail.blocks.list_block import ListValue
 from wagtail.blocks.stream_block import StreamValue
 from wagtail.fields import StreamField
+from wagtail_block_ids import block_ids, stream_values
 
 if t.TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from wagtail.blocks import BoundBlock
     from wagtail.models import Page
 
@@ -41,41 +40,13 @@ def _label_fields() -> tuple[str, ...]:
     return tuple(getattr(settings, "WAGTAIL_LIVE_COMMENTS_LABEL_FIELDS", DEFAULT_LABEL_FIELDS))
 
 
+__all__ = ["block_id_from_contentpath", "block_ids", "contentpath_for_block", "top_level_block_id"]
+
+
 def stream_field_names(page: Page) -> list[str]:
     """Names of the StreamFields on ``page``'s specific model."""
     model = getattr(page, "specific_class", None) or type(page)
     return [field.name for field in model._meta.get_fields() if isinstance(field, StreamField)]
-
-
-def _stream_values(page: Page) -> Iterator[tuple[str, StreamValue]]:
-    for name in stream_field_names(page):
-        value = getattr(page, name, None)
-        if isinstance(value, StreamValue):
-            yield name, value
-
-
-# Adapted from wagtail-inspect 0.1.1 (block_map.blocks_for_field); keep in sync by hand.
-def _child_ids(value: object) -> Iterator[str]:
-    if isinstance(value, StreamValue):
-        for child in value:
-            if child.id:
-                yield str(child.id)
-            yield from _child_ids(child.value)
-    elif isinstance(value, ListValue):
-        for child in value.bound_blocks:
-            if isinstance(child, str):
-                continue
-            if child.id:
-                yield str(child.id)
-            yield from _child_ids(child.value)
-    elif isinstance(value, dict):
-        for field_value in value.values():
-            yield from _child_ids(field_value)
-
-
-def block_ids(page: Page) -> list[str]:
-    """UUIDs of every stream and list child, top-level and nested, in page order."""
-    return [block_id for _name, value in _stream_values(page) for block_id in _child_ids(value)]
 
 
 def _as_uuid(part: str) -> str | None:
@@ -160,7 +131,7 @@ def _find_parts(value: object, parts: list[str], block_id: str, label_fields: tu
 def contentpath_for_block(page: Page, block_id: str) -> str | None:
     """Field path the editor can pin for ``block_id``, e.g. ``body.<uuid>.text``."""
     label_fields = _label_fields()
-    for name, value in _stream_values(page):
+    for name, value in stream_values(page):
         parts = _find_parts(value, [name], str(block_id), label_fields)
         if parts:
             return ".".join(parts)

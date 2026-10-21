@@ -25,7 +25,7 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 # 7.3 is the first Wagtail whose userbar items are Components with their own Media.
-dependencies = ["django>=4.2", "wagtail>=7.3"]
+dependencies = ["django>=4.2", "wagtail>=7.3", "wagtail-block-ids>=0.1.0"]
 
 [project.optional-dependencies]
 testing = [
@@ -47,6 +47,10 @@ Repository = "https://github.com/lincolnloop/wagtail-live-comments"
 Changelog = "https://github.com/lincolnloop/wagtail-live-comments/blob/main/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/lincolnloop/wagtail-live-comments/issues"
 
+# Sibling checkout until wagtail-block-ids is released.
+[tool.uv.sources]
+wagtail-block-ids = { path = "../wagtail-block-ids", editable = true }
+
 [build-system]
 requires = ["uv_build>=0.10.11,<0.14.0"]
 build-backend = "uv_build"
@@ -67,6 +71,7 @@ deps =
     django60: Django>=6.0,<6.1
     wagtail73: wagtail>=7.3,<7.4
     wagtail7: wagtail>=7.3,<8.0
+    -e {toxinidir}/../wagtail-block-ids
     coverage[toml]>=7.0
     pytest>=8.0
     pytest-django>=4.0

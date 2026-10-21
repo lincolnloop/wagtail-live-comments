@@ -21,3 +21,4 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `@user` / `@[Group]` mentions, in the live-page dialog and in the page editor's
   comment sidebar.
 - JSON endpoints under the Wagtail admin (`<admin>/live-comments/`).
+- Block marking through wagtail-block-ids, shared with wagtail-inspect.

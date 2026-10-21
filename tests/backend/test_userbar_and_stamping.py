@@ -1,7 +1,5 @@
 import json
 import re
-import sys
-import types
 from html import unescape
 
 import pytest
@@ -11,9 +9,9 @@ from django.urls import reverse
 from wagtail import hooks
 from wagtail.admin.userbar import EditPageItem, apply_userbar_hooks
 from wagtail.blocks import BoundBlock
+from wagtail_block_ids import marking, marks
 
 from tests.backend.helpers import blocks, url
-from wagtail_live_comments import annotate
 from wagtail_live_comments.comments import PageComments
 from wagtail_live_comments.wagtail_hooks import AddCommentUserbarItem, mentions_editor_js
 
@@ -82,46 +80,23 @@ def test_preview_stamps_block_roots_for_editors(editor_client, live_page):
     assert CONFIG_RE.search(html)
 
 
-def test_existing_block_id_on_the_root_is_left_alone(live_page):
-    heading = blocks(live_page)["heading"]
-
-    with annotate.stamping():
-        stamped = annotate._stamp(heading, '<h2 data-block-id="x">Hi</h2>')
-        nested = annotate._stamp(heading, '<div><h2 data-block-id="x">Hi</h2></div>')
-
-    assert stamped == '<h2 data-block-id="x">Hi</h2>'
-    # A child's id is not the root's: the root still gets one.
-    assert nested.startswith(f'<div data-block-id="{heading.id}"')
-
-
-def test_stamping_is_off_outside_editor_serves(live_page):
+def test_marking_is_off_outside_editor_serves(live_page):
     heading = blocks(live_page)["heading"]
 
     assert "data-block-id" not in str(BoundBlock.render(heading))
-    with annotate.stamping():
+    with marking():
         assert f'data-block-id="{heading.id}"' in str(BoundBlock.render(heading))
 
 
-def test_wagtail_inspect_patches_go_inside_ours(monkeypatch):
-    """Inspect stamps without checking for an existing id, so its layer must be the inner one."""
-    calls = []
-    fake = types.ModuleType("wagtail_inspect.patches")
-    fake.apply_patches = lambda: calls.append("inspect")
-    monkeypatch.setitem(sys.modules, "wagtail_inspect", types.ModuleType("wagtail_inspect"))
-    monkeypatch.setitem(sys.modules, "wagtail_inspect.patches", fake)
-    monkeypatch.setattr(annotate.django_apps, "is_installed", lambda name: name == "wagtail_inspect")
+def test_live_comments_marks_editor_serves_without_wrappers(live_page, editor):
+    """One marker, for users who can comment; never asks for display:contents wrappers."""
+    ours = [marker for marker in marks._markers if marker.should_mark.__module__ == "wagtail_live_comments.apps"]
 
-    annotate.apply_patches()
-
-    assert calls == ["inspect"]
-
-
-def test_patches_are_idempotent():
-    render = BoundBlock.render
-
-    annotate.apply_patches()
-
-    assert BoundBlock.render is render
+    assert len(ours) == 1
+    assert ours[0].wrap is False
+    assert ours[0].should_mark(live_page, _request(editor)) is True
+    reader = User.objects.create_user(username="reader", password="password")
+    assert ours[0].should_mark(live_page, _request(reader)) is False
 
 
 # -- Userbar item ------------------------------------------------------------------------------
