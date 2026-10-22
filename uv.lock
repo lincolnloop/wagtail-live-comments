@@ -1508,24 +1508,12 @@ wheels = [
 
 [[package]]
 name = "wagtail-block-ids"
-version = "0.1.0"
-source = { editable = "../wagtail-block-ids" }
+version = "0.2.0"
+source = { git = "https://github.com/lincolnloop/wagtail-block-ids?tag=v0.2.0#9c78df137ff0fd8f69baad972889c127d896c4a2" }
 dependencies = [
     { name = "django" },
     { name = "wagtail" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "coverage", extras = ["toml"], marker = "extra == 'testing'", specifier = ">=7.0" },
-    { name = "django", specifier = ">=4.2" },
-    { name = "pre-commit", marker = "extra == 'testing'", specifier = ">=4.0" },
-    { name = "pytest", marker = "extra == 'testing'", specifier = ">=8.0" },
-    { name = "pytest-django", marker = "extra == 'testing'", specifier = ">=4.0" },
-    { name = "ruff", marker = "extra == 'testing'", specifier = ">=0.15.6" },
-    { name = "wagtail", specifier = ">=5.0" },
-]
-provides-extras = ["testing"]
 
 [[package]]
 name = "wagtail-live-comments"
@@ -1565,7 +1553,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'testing'", specifier = ">=0.15.6" },
     { name = "setuptools", marker = "extra == 'testing'", specifier = ">=82.0.1" },
     { name = "wagtail", specifier = ">=7.3" },
-    { name = "wagtail-block-ids", editable = "../wagtail-block-ids" },
+    { name = "wagtail-block-ids", git = "https://github.com/lincolnloop/wagtail-block-ids?tag=v0.2.0" },
 ]
 provides-extras = ["testing"]
 
