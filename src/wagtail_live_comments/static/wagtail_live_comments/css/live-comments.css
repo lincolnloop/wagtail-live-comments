@@ -16,6 +16,8 @@ html[data-live-page-comment-targeting] [data-block-id][data-commentable][data-co
 }
 
 html[data-live-page-comment-targeting]
+  [data-block-id][data-commentable]:has([data-block-ids-ignore]:hover),
+html[data-live-page-comment-targeting]
   [data-block-id][data-commentable]:has([data-block-id][data-commentable]:hover),
 html[data-live-page-comment-targeting]
   [data-block-id][data-commentable]:has([data-block-id][data-commentable]:focus-visible) {
@@ -40,6 +42,13 @@ html[data-live-page-comment-targeting] [data-block-id][data-comment-unavailable]
 html[data-live-page-comment-targeting] [data-block-id][data-comment-unavailable] {
   outline: 1px dotted color-mix(in srgb, currentColor 45%, transparent);
   outline-offset: 3px;
+}
+
+/* Pins and popovers are our UI, not part of the block: keep their own cursor.
+ * After the targeting and unavailable rules, which it ties with on specificity. */
+html[data-live-page-comment-targeting] [data-block-id] [data-block-ids-ignore],
+html[data-live-page-comment-targeting] [data-block-id] [data-block-ids-ignore] * {
+  cursor: pointer !important;
 }
 
 .w-userbar__item [data-live-page-comment-trigger][aria-pressed="true"],

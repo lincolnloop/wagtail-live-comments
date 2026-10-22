@@ -45,7 +45,20 @@ def test_editor_comments_on_a_nested_card(editor_page, live_page):
     editor_page.fill("[data-live-page-comment-dialog] textarea", "Is this headline right?")
     editor_page.click("[data-live-page-comment-submit]")
 
-    expect(editor_page.locator(f'[data-live-page-comment-pin-key][data-block-id="{card_id}"]')).to_have_count(1)
+    pin = editor_page.locator(f'[data-live-page-comment-pin][data-live-page-comment-pin-block="{card_id}"]')
+    expect(pin).to_have_count(1)
+    # A pin is our UI, not a block: block tools (inspect, targeting) must skip it.
+    expect(pin).not_to_have_attribute("data-block-id", card_id)
+    expect(pin).to_have_attribute("data-block-ids-ignore", "")
+
+    # Back in targeting mode, the pin is still not a target, and clicking it opens
+    # its comment instead of a new-comment dialog.
+    editor_page.click("[data-wagtail-userbar-trigger]")
+    editor_page.click("[data-live-page-comment-trigger]")
+    expect(pin).not_to_have_attribute("data-commentable", "")
+    pin.locator("[data-live-page-comment-pill]").click()
+    expect(editor_page.locator("[data-live-page-comment-dialog][open]")).to_have_count(0)
+    expect(editor_page.locator("[data-live-page-comment-popover]:not([hidden])")).to_have_count(1)
     # Pins live in the page, so the script adds the stylesheet there too.
     expect(editor_page.locator("head link[data-wagtail-live-comments-css]")).to_have_count(1)
     comment = Comment.objects.get()

@@ -92,6 +92,16 @@ describe("WagtailLiveComments helpers", () => {
     expect(appended[0].href).toBe("/static/live-comments.css");
   });
 
+  it("never picks our own UI (pins, popovers) as a block", () => {
+    const api = loadApi();
+    const block = { closest: (sel) => (sel === "[data-block-ids-ignore]" ? null : block) };
+    const pinButton = {
+      closest: (sel) => (sel === "[data-block-ids-ignore]" ? {} : block),
+    };
+    expect(api.closestSelectable(block)).toBe(block);
+    expect(api.closestSelectable(pinButton)).toBeNull();
+  });
+
   it("says when blocks are out of the latest draft", () => {
     const api = loadApi();
     expect(api.targetingMessage(3, 0)).toBe("Highlighted regions can receive a comment.");

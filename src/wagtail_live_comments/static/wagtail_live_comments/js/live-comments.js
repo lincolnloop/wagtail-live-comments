@@ -7,6 +7,9 @@
   // Contract documented in wagtail-block-ids.
   const MODE_ON_EVENT = "wagtail-block-ids:mode-on";
   const MODE_SOURCE = "wagtail-live-comments";
+  // Our own UI on the page (pins, popovers): block modes ignore hovers and clicks
+  // on it, so it is never highlighted or picked as a block. Same contract.
+  const IGNORE_ATTR = "data-block-ids-ignore";
   const UNAVAILABLE_HINT =
     "Not in the latest draft. Publish or revert the draft to comment on this block.";
   const CONFIG_ID = "wagtail-live-comments-config";
@@ -325,7 +328,7 @@
   function closestSelectable(target) {
     const el =
       target && typeof target.closest === "function" ? target : target && target.parentElement;
-    if (!el || typeof el.closest !== "function") {
+    if (!el || typeof el.closest !== "function" || el.closest("[" + IGNORE_ATTR + "]")) {
       return null;
     }
     return el.closest(SELECTABLE);
@@ -628,7 +631,9 @@
         const pin = doc.createElement("div");
         pin.setAttribute("data-live-page-comment-pin", "");
         pin.setAttribute("data-live-page-comment-pin-key", pinKey);
-        pin.setAttribute("data-block-id", blockId);
+        // Not data-block-id: a pin is our UI, not a block.
+        pin.setAttribute("data-live-page-comment-pin-block", blockId);
+        pin.setAttribute(IGNORE_ATTR, "");
         const hashId = commentHashId(item.id);
         if (hashId) {
           pin.setAttribute("id", hashId);
@@ -654,6 +659,7 @@
         popover.className = "live-page-comment-popover";
         popover.setAttribute("data-live-page-comment-popover", "");
         popover.setAttribute("data-live-page-comment-pin-key", pinKey);
+        popover.setAttribute(IGNORE_ATTR, "");
         popover.hidden = true;
         const anchor = `--live-page-comment-${pinKey}`;
         if (button) {
@@ -1366,7 +1372,8 @@
       }
       const block = closestSelectable(event.target);
       if (!block) {
-        if (event.target.closest && event.target.closest(UNAVAILABLE)) {
+        const unavailable = event.target.closest && event.target.closest(UNAVAILABLE);
+        if (unavailable && !event.target.closest("[" + IGNORE_ATTR + "]")) {
           event.preventDefault();
           event.stopImmediatePropagation();
           setStatus(UNAVAILABLE_HINT);
@@ -1861,6 +1868,7 @@
     readCsrfToken,
     readCommentResponse,
     isSelectableId,
+    closestSelectable,
     targetingMessage,
     errorMessageFromPayload,
     isCommentSubmitChord,
