@@ -53,4 +53,61 @@ describe("WagtailLiveCommentsMentionsEditor", () => {
 
     expect(calls).toEqual(["@[Reviewers] "]);
   });
+
+  it("ignores the picker's own DOM changes but not comment text changes", () => {
+    const api = loadApi();
+    function element(inPicker) {
+      return {
+        nodeType: 1,
+        closest(selector) {
+          return inPicker && selector === ".live-page-comment-mentions" ? this : null;
+        },
+      };
+    }
+    const body = element(false);
+    const list = element(true);
+    const comment = element(false);
+    const pickerText = { nodeType: 3, parentElement: list };
+
+    expect(
+      api.isPickerMutation({
+        type: "childList",
+        target: body,
+        addedNodes: [list],
+        removedNodes: [],
+      }),
+    ).toBe(true);
+    expect(
+      api.isPickerMutation({
+        type: "childList",
+        target: list,
+        addedNodes: [],
+        removedNodes: [comment],
+      }),
+    ).toBe(true);
+    expect(
+      api.isPickerMutation({
+        type: "characterData",
+        target: pickerText,
+        addedNodes: [],
+        removedNodes: [],
+      }),
+    ).toBe(true);
+    expect(
+      api.isPickerMutation({
+        type: "childList",
+        target: body,
+        addedNodes: [comment],
+        removedNodes: [],
+      }),
+    ).toBe(false);
+    expect(
+      api.isPickerMutation({
+        type: "characterData",
+        target: { nodeType: 3, parentElement: comment },
+        addedNodes: [],
+        removedNodes: [],
+      }),
+    ).toBe(false);
+  });
 });

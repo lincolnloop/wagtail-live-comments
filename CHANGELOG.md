@@ -18,6 +18,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Following a comment permalink while another comment was open left both popovers
   open.
+- In the page editor, the `@` picker no longer re-scans every comment for mentions
+  on each keystroke, and it follows its textarea at most once per frame while
+  scrolling.
 
 ## [0.1.0]
 

@@ -823,8 +823,10 @@
       function (textarea, value) {
         textarea.value = value;
       };
+    const view = doc.defaultView || global;
     const cache = new Map();
     let state = null;
+    let frame = 0;
     let timer = null;
     let ticket = 0;
     let uid = 0;
@@ -881,11 +883,17 @@
       list.style.setProperty("width", Math.max(rect.width, 224) + "px");
     }
 
-    /** Keep a floating list under its textarea (scroll, layout shifts). */
+    /** Keep a floating list under its textarea (scroll, layout shifts), once per frame. */
     function reposition() {
-      if (floating && state) {
-        place(state.list, state.textarea);
+      if (!floating || !state || frame) {
+        return;
       }
+      frame = view.requestAnimationFrame(() => {
+        frame = 0;
+        if (state) {
+          place(state.list, state.textarea);
+        }
+      });
     }
 
     function render() {

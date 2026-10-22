@@ -3,6 +3,23 @@
   const TEXTAREAS = ".comment__input, .comment__reply-input, .comment-reply__input";
   const COMMENT_TEXT = ".comments-list .comment__text";
   const HIGHLIGHT = "wagtail-live-comments-mention";
+  const PICKER = ".live-page-comment-mentions";
+
+  function insidePicker(node) {
+    const el = node && (node.nodeType === 1 ? node : node.parentElement);
+    return Boolean(el && typeof el.closest === "function" && el.closest(PICKER));
+  }
+
+  /** The "@" picker's own list (on <body>, re-rendered per keystroke): not comment text. */
+  function isPickerMutation(record) {
+    if (insidePicker(record.target)) {
+      return true;
+    }
+    return (
+      record.type === "childList" &&
+      [...record.addedNodes, ...record.removedNodes].every(insidePicker)
+    );
+  }
 
   function mentionsUrl(template, pathname) {
     const match = String(pathname || "").match(/\/pages\/(\d+)\/edit\//);
@@ -82,7 +99,8 @@
     });
     // The editor scrolls and re-lays out comments while typing; keep the list
     // under its textarea (closing here would also drop the pending lookup).
-    doc.addEventListener("scroll", () => picker.reposition(), true);
+    doc.addEventListener("scroll", () => picker.reposition(), { capture: true, passive: true });
+    doc.defaultView.addEventListener("resize", () => picker.reposition(), { passive: true });
 
     const css = global.CSS;
     if (!css || !css.highlights || typeof global.Highlight !== "function") {
@@ -139,8 +157,8 @@
     }
 
     // Comments render (and re-render) inside React; repaint after changes.
-    new MutationObserver(() => {
-      if (frame === null) {
+    new MutationObserver((records) => {
+      if (frame === null && !records.every(isPickerMutation)) {
         frame = global.requestAnimationFrame(refresh);
       }
     }).observe(doc.body, { childList: true, subtree: true, characterData: true });
@@ -152,6 +170,7 @@
   global.WagtailLiveCommentsMentionsEditor = {
     mentionsUrl,
     mentionRanges,
+    isPickerMutation,
     setReactValue,
     boot,
   };
