@@ -16,14 +16,18 @@ unchanged.
 
 ## Requirements
 
-Python 3.12+, Django 4.2+, Wagtail 7.3+, wagtail-block-ids 0.1+ (the first release whose userbar items carry
-their own `Media`), with Wagtail comments on (`WAGTAILADMIN_COMMENTS_ENABLED`, the
-default).
+Python 3.12+, Django 4.2+, Wagtail 7.3+ (the first release whose userbar items carry
+their own `Media`), wagtail-block-ids 0.2+, with Wagtail comments on
+(`WAGTAILADMIN_COMMENTS_ENABLED`, the default).
 
 ## Install
 
+Neither package is on PyPI yet, so install wagtail-block-ids from its tag alongside the
+release wheel:
+
 ```sh
-uv add "wagtail-live-comments @ https://github.com/lincolnloop/wagtail-live-comments/releases/download/v0.1.0/wagtail_live_comments-0.1.0-py3-none-any.whl"
+uv add "wagtail-block-ids @ git+https://github.com/lincolnloop/wagtail-block-ids@v0.2.0" \
+  "wagtail-live-comments @ https://github.com/lincolnloop/wagtail-live-comments/releases/download/v0.1.0/wagtail_live_comments-0.1.0-py3-none-any.whl"
 ```
 
 ```python

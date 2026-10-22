@@ -7,24 +7,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Changed
-
-- The comment JSON carries the pin point only as `position` (`{"x", "y"}` or `null`).
-  The duplicate top-level `x` / `y` keys are gone.
-- Comment popovers fade in from their pin (180ms) and out (120ms), with no motion
-  under `prefers-reduced-motion`. Button hovers ease their border and text color
-  along with the background.
-- Loading a page's comments no longer runs a query per comment author for avatars,
-  and builds the latest draft once instead of twice.
-
-### Fixed
-
-- Following a comment permalink while another comment was open left both popovers
-  open.
-- In the page editor, the `@` picker no longer re-scans every comment for mentions
-  on each keystroke, and it follows its textarea at most once per frame while
-  scrolling.
-
 ## [0.1.0]
 
 ### Added
@@ -35,8 +17,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Comments on top-level and nested StreamField blocks in any StreamField on the page.
   They are stored as native Wagtail comments, and the editor links back to the block's
   panel.
-- Pin points (`CommentAnchor`), replies, editing, deleting and resolving.
+- Pin points (`CommentAnchor`), replies, editing, deleting and resolving. One comment
+  popover is open at a time; it fades in from its pin, with no motion under
+  `prefers-reduced-motion`.
 - `@user` / `@[Group]` mentions, in the live-page dialog and in the page editor's
   comment sidebar.
 - JSON endpoints under the Wagtail admin (`<admin>/live-comments/`).
-- Block marking through wagtail-block-ids, shared with wagtail-inspect.
+- Block marking through [wagtail-block-ids](https://github.com/lincolnloop/wagtail-block-ids)
+  0.2.0, shared with wagtail-inspect.
