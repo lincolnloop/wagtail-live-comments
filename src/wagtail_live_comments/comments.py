@@ -300,7 +300,7 @@ class PageComments:
         self, comment: Comment, *, point: ClickPoint | None, mentions: Mapping[str, Mention]
     ) -> dict[str, t.Any]:
         ids = {"page_id": self.page.pk, "comment_id": comment.pk}
-        item: dict[str, t.Any] = {
+        return {
             **self._serialize_card(comment, mentions),
             "replies": [self._serialize_reply(reply, mentions=mentions) for reply in comment.replies.all()],
             "contentpath": comment.contentpath,
@@ -312,7 +312,3 @@ class PageComments:
             "resolveUrl": _url("resolve", **ids),
             "editorUrl": self._editor_url(comment.contentpath),
         }
-        if point:
-            item["x"] = point["x"]
-            item["y"] = point["y"]
-        return item

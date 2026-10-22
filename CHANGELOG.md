@@ -9,6 +9,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- The comment JSON carries the pin point only as `position` (`{"x", "y"}` or `null`).
+  The duplicate top-level `x` / `y` keys are gone.
 - Loading a page's comments no longer runs a query per comment author for avatars,
   and builds the latest draft once instead of twice.
 

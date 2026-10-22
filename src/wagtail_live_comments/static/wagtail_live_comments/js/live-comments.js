@@ -372,8 +372,12 @@
   }
 
   function commentPinPoint(item) {
-    const x = Number(item && item.x);
-    const y = Number(item && item.y);
+    const position = item && item.position;
+    if (!position) {
+      return null;
+    }
+    const x = Number(position.x);
+    const y = Number(position.y);
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
       return null;
     }

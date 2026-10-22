@@ -193,7 +193,7 @@ def test_create_stores_the_click_point_on_an_anchor(editor_client, editor, live_
     assert (anchor.x, anchor.y) == (0.2, 0.15)
     created = response.json()["comment"]
     assert created["position"] == {"x": 0.2, "y": 0.15}
-    assert (created["x"], created["y"]) == (0.2, 0.15)
+    assert "x" not in created
     grouped = _config(live_page, editor)["comments"][heading_id]
     assert grouped[0]["position"] == {"x": 0.2, "y": 0.15}
     assert grouped[0]["replyUrl"] == created["replyUrl"]

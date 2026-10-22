@@ -210,7 +210,8 @@ describe("WagtailLiveComments helpers", () => {
       x: 0.2,
       y: 0.2,
     });
-    expect(api.commentPinPoint({ x: 0.2, y: 0.2 })).toEqual({ x: 0.2, y: 0.2 });
+    expect(api.commentPinPoint({ position: { x: 0.2, y: 0.2 } })).toEqual({ x: 0.2, y: 0.2 });
+    expect(api.commentPinPoint({ position: null })).toBeNull();
     expect(api.commentPinPoint({})).toBeNull();
   });
 
@@ -221,8 +222,7 @@ describe("WagtailLiveComments helpers", () => {
         {
           id: 12,
           text: "Hello",
-          x: 0.2,
-          y: 0.15,
+          position: { x: 0.2, y: 0.15 },
           replyUrl: "/cms/live-comments/pages/9/comments/12/replies/",
           editUrl: "/cms/live-comments/pages/9/comments/12/edit/",
           deleteUrl: "/cms/live-comments/pages/9/comments/12/delete/",
@@ -337,8 +337,7 @@ describe("WagtailLiveComments helpers", () => {
         {
           id: 12,
           text: "Hi",
-          x: 0.2,
-          y: 0.15,
+          position: { x: 0.2, y: 0.15 },
           editorUrl: "/cms/pages/9/edit/#block-aaaa-section",
           replies: [],
         },
