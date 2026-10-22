@@ -1150,23 +1150,37 @@
       });
     }
 
+    // At most one popover is open. Tracking it means a click anywhere on the
+    // page closes one node instead of rewriting every popover and pill.
+    let openPopover = null;
+
+    function hasOpenPopover() {
+      return Boolean(openPopover && openPopover.popover.isConnected !== false);
+    }
+
     function closeCommentPopovers() {
-      doc.querySelectorAll("[data-live-page-comment-popover]").forEach((el) => {
-        el.hidden = true;
-      });
-      doc.querySelectorAll("[data-live-page-comment-pill]").forEach((el) => {
-        el.setAttribute("aria-expanded", "false");
-      });
+      if (!openPopover) {
+        return;
+      }
+      openPopover.popover.hidden = true;
+      if (openPopover.button) {
+        openPopover.button.setAttribute("aria-expanded", "false");
+      }
+      openPopover = null;
     }
 
     function showCommentPopover(popover, button) {
       if (!popover) {
         return;
       }
+      if (openPopover && openPopover.popover !== popover) {
+        closeCommentPopovers();
+      }
       popover.hidden = false;
       if (button) {
         button.setAttribute("aria-expanded", "true");
       }
+      openPopover = { popover, button };
       focusPopoverReplyInput(popover);
     }
 
@@ -1368,9 +1382,7 @@
         }
         return;
       }
-      if (event.target.closest && !event.target.closest("[data-live-page-comment-popover]")) {
-        closeCommentPopovers();
-      }
+      closeCommentPopovers();
       if (!targeting || chrome.dialog.open) {
         return;
       }
@@ -1405,13 +1417,10 @@
       if (submitCommentFormFromKeydown(event)) {
         return;
       }
-      if (event.key === "Escape") {
-        const openPopover = doc.querySelector("[data-live-page-comment-popover]:not([hidden])");
-        if (openPopover) {
-          event.preventDefault();
-          closeCommentPopovers();
-          return;
-        }
+      if (event.key === "Escape" && hasOpenPopover()) {
+        event.preventDefault();
+        closeCommentPopovers();
+        return;
       }
       if (!targeting) {
         return;

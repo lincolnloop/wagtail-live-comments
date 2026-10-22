@@ -11,6 +11,8 @@ from testapp.factories import demo_stream
 from testapp.models import DemoPage
 from wagtail.models import Comment, Locale, Page, Site
 
+from wagtail_live_comments import block_map
+
 PASSWORD = "password"
 
 
@@ -64,6 +66,51 @@ def test_editor_comments_on_a_nested_card(editor_page, live_page):
     comment = Comment.objects.get()
     assert comment.text == "Is this headline right?"
     assert card_id in comment.contentpath
+
+
+def test_one_comment_popover_is_open_at_a_time(editor_page, live_page):
+    editor = get_user_model().objects.get(username="editor")
+    heading_id, note_id = str(live_page.body[0].id), str(live_page.sidebar[0].id)
+    first, second = (
+        Comment.objects.create(
+            page=live_page, user=editor, text=text, contentpath=block_map.contentpath_for_block(live_page, block_id)
+        )
+        for text, block_id in (("On the heading.", heading_id), ("On the note.", note_id))
+    )
+    open_popovers = editor_page.locator("[data-live-page-comment-popover]:not([hidden])")
+    expanded = editor_page.locator('[data-live-page-comment-pill][aria-expanded="true"]')
+
+    def pill(comment):
+        return editor_page.locator(f"#live-page-comment-{comment.pk} [data-live-page-comment-pill]")
+
+    # A permalink opens its comment; opening another pin closes it.
+    editor_page.goto(f"{editor_page.url}#live-page-comment-{first.pk}")
+    editor_page.reload()
+    expect(open_popovers).to_have_count(1)
+    expect(pill(first)).to_have_attribute("aria-expanded", "true")
+    # The open popover may cover the other pin at this viewport: click it directly.
+    pill(second).dispatch_event("click")
+    expect(open_popovers).to_have_count(1)
+    expect(open_popovers).to_contain_text("On the note.")
+    expect(expanded).to_have_count(1)
+    # Following a permalink while another comment is open swaps them.
+    editor_page.evaluate("location.hash = ''")  # The URL still carries the first permalink.
+    editor_page.evaluate(f"location.hash = 'live-page-comment-{first.pk}'")
+    expect(open_popovers).to_contain_text("On the heading.")
+    expect(open_popovers).to_have_count(1)
+    expect(expanded).to_have_count(1)
+
+    # The same pin toggles it shut; Escape and an outside click close it too.
+    pill(first).click()
+    expect(open_popovers).to_have_count(0)
+    expect(expanded).to_have_count(0)
+    pill(first).click()
+    editor_page.keyboard.press("Escape")
+    expect(open_popovers).to_have_count(0)
+    pill(first).click()
+    editor_page.locator("body").click(position={"x": 5, "y": 5})
+    expect(open_popovers).to_have_count(0)
+    expect(expanded).to_have_count(0)
 
 
 def test_blocks_missing_from_the_latest_draft_say_why(page, live_server, live_page):
