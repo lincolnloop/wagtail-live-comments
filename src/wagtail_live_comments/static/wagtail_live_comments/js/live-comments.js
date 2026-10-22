@@ -117,6 +117,15 @@
     return url + (url.includes("?") ? "&" : "?") + query;
   }
 
+  /** Parsed JSON from a same-origin admin GET, or `null` on a non-2xx answer. */
+  async function getJson(fetchImpl, url) {
+    const response = await fetchImpl(url, {
+      credentials: "same-origin",
+      headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+    });
+    return response.ok ? response.json() : null;
+  }
+
   /** The "@query" being typed just before the caret, if any. */
   function mentionQueryAt(value, caret) {
     const before = String(value || "").slice(0, caret);
@@ -360,10 +369,16 @@
     return roots;
   }
 
-  function findBlockRoot(doc, blockId) {
-    return Array.from(doc.querySelectorAll("[data-block-id]")).find(
-      (el) => el.getAttribute("data-block-id") === String(blockId),
-    );
+  /** First element on the page for each block id: one scan, however many blocks. */
+  function blockRootsById(doc) {
+    const roots = new Map();
+    doc.querySelectorAll("[data-block-id]").forEach((el) => {
+      const id = el.getAttribute("data-block-id");
+      if (!roots.has(id)) {
+        roots.set(id, el);
+      }
+    });
+    return roots;
   }
 
   function commentItemsForBlock(comments, blockId) {
@@ -432,14 +447,11 @@
     );
   }
 
+  /** Popovers live in the page-level layer, not in their pin: find them by pin key. */
   function commentPopoverForPin(doc, pin) {
-    if (!pin) {
-      return null;
-    }
-    return (
-      pin.querySelector("[data-live-page-comment-popover]") ||
-      commentPopoverForKey(doc, pin.getAttribute("data-live-page-comment-pin-key"))
-    );
+    return pin
+      ? commentPopoverForKey(doc, pin.getAttribute("data-live-page-comment-pin-key"))
+      : null;
   }
 
   function removeCommentPin(doc, pin) {
@@ -613,6 +625,7 @@
     // `blockIds` limits the rebuild to those blocks; omit it to render them all.
     const scope = Array.isArray(blockIds) ? new Set(blockIds.map(String)) : null;
     const known = new Set();
+    let roots = null;
     Object.keys(comments || {}).forEach((blockId) => {
       if (scope && !scope.has(blockId)) {
         return;
@@ -621,7 +634,8 @@
       if (!items.length) {
         return;
       }
-      const root = findBlockRoot(doc, blockId);
+      roots = roots || blockRootsById(doc);
+      const root = roots.get(blockId);
       if (!root) {
         return;
       }
@@ -929,14 +943,10 @@
       if (cache.has(query)) {
         return cache.get(query);
       }
-      const response = await fetchImpl(withQuery(url, { q: query }), {
-        credentials: "same-origin",
-        headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
-      });
-      if (!response.ok) {
+      const data = await getJson(fetchImpl, withQuery(url, { q: query }));
+      if (!data) {
         return [];
       }
-      const data = await response.json();
       const items = [].concat(data.users || [], data.groups || []);
       cache.set(query, items);
       return items;
@@ -1142,7 +1152,8 @@
     }
 
     function applyTargetingAttrs(on) {
-      selectableBlocks().forEach((el) => {
+      const blocks = selectableBlocks();
+      blocks.forEach((el) => {
         if (on) {
           el.setAttribute("data-commentable", "");
           el.setAttribute("tabindex", "0");
@@ -1156,6 +1167,7 @@
           el.removeAttribute("data-comment-selected");
         }
       });
+      return blocks;
     }
 
     // At most one popover is open. Tracking it means a click anywhere on the
@@ -1231,10 +1243,9 @@
       targeting = true;
       submittedOk = false;
       doc.documentElement.setAttribute("data-live-page-comment-targeting", "");
-      applyTargetingAttrs(true);
+      const blocks = applyTargetingAttrs(true);
       const unavailable = applyUnavailableAttrs(true);
       setTriggerState();
-      const blocks = selectableBlocks();
       setStatus(targetingMessage(blocks.length, unavailable.length));
       const ModeEvent = (doc.defaultView && doc.defaultView.CustomEvent) || global.CustomEvent;
       if (typeof ModeEvent === "function") {
@@ -1292,11 +1303,26 @@
       }
     }
 
+    function setSubmitting(busy) {
+      submitting = busy;
+      chrome.submit.disabled = busy;
+      chrome.textarea.disabled = busy;
+      if (busy) {
+        chrome.form.setAttribute("aria-busy", "true");
+      } else {
+        chrome.form.removeAttribute("aria-busy");
+      }
+    }
+
+    function failSubmit(text, message) {
+      setSubmitting(false);
+      chrome.textarea.value = text;
+      showError(message);
+      chrome.textarea.focus();
+    }
+
     function onDialogClose() {
-      chrome.form.toggleAttribute("aria-busy", false);
-      submitting = false;
-      chrome.submit.disabled = false;
-      chrome.textarea.disabled = false;
+      setSubmitting(false);
       if (submittedOk) {
         stopTargeting();
         setStatus(SUCCESS_MESSAGE);
@@ -1313,10 +1339,7 @@
         return;
       }
       const text = chrome.textarea.value;
-      submitting = true;
-      chrome.submit.disabled = true;
-      chrome.textarea.disabled = true;
-      chrome.form.setAttribute("aria-busy", "true");
+      setSubmitting(true);
       clearError();
 
       try {
@@ -1326,13 +1349,7 @@
           position: pendingPosition,
         });
         if (!result.ok) {
-          chrome.textarea.disabled = false;
-          chrome.submit.disabled = false;
-          submitting = false;
-          chrome.form.toggleAttribute("aria-busy", false);
-          chrome.textarea.value = text;
-          showError(errorMessageFromPayload(result.payload, NETWORK_MESSAGE));
-          chrome.textarea.focus();
+          failSubmit(text, errorMessageFromPayload(result.payload, NETWORK_MESSAGE));
           return;
         }
         submittedOk = true;
@@ -1346,13 +1363,7 @@
         chrome.textarea.value = "";
         dismissDialog();
       } catch {
-        chrome.textarea.disabled = false;
-        chrome.submit.disabled = false;
-        submitting = false;
-        chrome.form.toggleAttribute("aria-busy", false);
-        chrome.textarea.value = text;
-        showError(NETWORK_MESSAGE);
-        chrome.textarea.focus();
+        failSubmit(text, NETWORK_MESSAGE);
       }
     }
 
@@ -1755,39 +1766,30 @@
       if (!commentId || !text) {
         return;
       }
-      if (submit) {
-        submit.disabled = true;
-      }
-      textarea.disabled = true;
       const found = findStoredComment(commentId);
       const url = found && found.comment.replyUrl;
       if (!url) {
-        textarea.disabled = false;
-        if (submit) {
-          submit.disabled = false;
-        }
         return;
       }
+      function setBusy(busy) {
+        textarea.disabled = busy;
+        if (submit) {
+          submit.disabled = busy;
+        }
+      }
+      setBusy(true);
       try {
         const result = await postCommentJson(url, { text });
         // The server's reply DTO is the only source of author/avatar/createdAt.
         const reply = result.ok ? result.payload.reply : null;
         if (!reply) {
-          textarea.disabled = false;
-          if (submit) {
-            submit.disabled = false;
-          }
+          setBusy(false);
           return;
         }
-        if (found) {
-          found.comment.replies = (found.comment.replies || []).concat([reply]);
-        }
+        found.comment.replies = (found.comment.replies || []).concat([reply]);
         rerenderOpenComment(commentId);
       } catch {
-        textarea.disabled = false;
-        if (submit) {
-          submit.disabled = false;
-        }
+        setBusy(false);
       }
     }
 
@@ -1905,6 +1907,7 @@
     findMentions,
     renderCommentText,
     withQuery,
+    getJson,
     mentionQueryAt,
     insertMention,
     createMentionPicker,

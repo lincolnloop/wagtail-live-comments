@@ -560,6 +560,59 @@ describe("WagtailLiveComments helpers", () => {
     expect(touched).toEqual(["block-2"]);
   });
 
+  it("scans the page's blocks once per render, however many have comments", () => {
+    const api = loadApi();
+    let scans = 0;
+    const roots = ["block-1", "block-2", "block-3"].map((id) => ({
+      attrs: { "data-block-id": id },
+      getAttribute(name) {
+        return this.attrs[name];
+      },
+      setAttribute(name, value) {
+        this.attrs[name] = value;
+      },
+      querySelectorAll() {
+        return [];
+      },
+      appendChild() {},
+    }));
+    const doc = {
+      querySelector() {
+        return null;
+      },
+      querySelectorAll(selector) {
+        if (selector === "[data-block-id]") {
+          scans += 1;
+          return roots;
+        }
+        return [];
+      },
+      getElementById() {
+        return { appendChild() {} };
+      },
+      createElement() {
+        return {
+          attrs: {},
+          style: { setProperty() {} },
+          setAttribute(name, value) {
+            this.attrs[name] = value;
+          },
+          querySelector() {
+            return null;
+          },
+        };
+      },
+    };
+
+    api.renderCommentPins(doc, {
+      "block-1": [{ id: 1, text: "One", replies: [] }],
+      "block-2": [{ id: 2, text: "Two", replies: [] }],
+      "block-3": [{ id: 3, text: "Three", replies: [] }],
+    });
+
+    expect(scans).toBe(1);
+  });
+
   it("wraps resolved mentions and escapes everything else", () => {
     const api = loadApi();
     const html = api.renderCommentText("<b>Hi</b> @ana and @[Content Editors]. @anabel", [

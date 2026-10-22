@@ -120,14 +120,10 @@
       fresh.forEach((token) => asked.add(token));
       const query = fresh.map((token) => ["tokens", token]);
       try {
-        const response = await fetchImpl(api.withQuery(url, query), {
-          credentials: "same-origin",
-          headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
-        });
-        if (!response.ok) {
+        const data = await api.getJson(fetchImpl, api.withQuery(url, query));
+        if (!data) {
           return false;
         }
-        const data = await response.json();
         (data.mentions || []).forEach((mention) => resolved.add(mention.token));
         return true;
       } catch {
