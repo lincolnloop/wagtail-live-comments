@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import typing as t
 import uuid
+from functools import cached_property
 
 from django.db import transaction
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from django.urls import reverse
@@ -142,7 +144,7 @@ class PageComments:
             "createUrl": _url("create", page_id=page_id),
             "mentionsUrl": _url("mention_candidates", page_id=page_id),
             "cssUrl": static(STYLESHEET),
-            "eligibleBlockIds": block_map.block_ids(self._source_page()),
+            "eligibleBlockIds": self._source[1],
             "currentUser": _author_name(self.user),
             "currentAvatar": _avatar(self.user),
             "comments": self._open_comments_by_block(),
@@ -164,7 +166,7 @@ class PageComments:
         target = _block_id(block_id)
         body = _text(text)
         point = _click_point(position)
-        source = self._source_page()
+        source, _ids = self._source
         contentpath = block_map.contentpath_for_block(source, target)
         if not contentpath or not Comment(contentpath=contentpath).has_valid_contentpath(source):
             raise CommentError(CommentError.STALE_BLOCK, "That block is not present on the latest draft.")
@@ -213,16 +215,20 @@ class PageComments:
 
     # -- Internals ---------------------------------------------------------------
 
-    def _source_page(self) -> Page:
-        """Page object whose StreamFields comments target.
+    @cached_property
+    def _source(self) -> tuple[Page, list[str]]:
+        """Page object whose StreamFields comments target, and its block ids.
 
         Prefer the latest draft. A draft with no blocks is treated as a wiped draft,
-        so fall back to the live page the editor is looking at.
+        so fall back to the live page the editor is looking at. Cached: rebuilding
+        the draft means loading and deserializing its revision.
         """
         latest = self.page.get_latest_revision_as_object()
-        if block_map.block_ids(latest):
-            return latest
-        return self.page.specific
+        ids = block_map.block_ids(latest)
+        if ids:
+            return latest, ids
+        live = self.page.specific
+        return live, block_map.block_ids(live)
 
     def _open_comment(self, comment_id: int) -> Comment:
         comment = get_object_or_404(Comment, pk=comment_id, page_id=self.page.pk)
@@ -238,10 +244,13 @@ class PageComments:
         return target
 
     def _open_comments_by_block(self) -> dict[str, list[dict[str, t.Any]]]:
+        # ``avatar_url`` reads ``user.wagtail_userprofile``: join it, or it is a query per author.
         comments = list(
             Comment.objects.filter(page=self.page, resolved_at__isnull=True)
-            .select_related("user")
-            .prefetch_related("replies__user")
+            .select_related("user__wagtail_userprofile")
+            .prefetch_related(
+                Prefetch("replies", queryset=CommentReply.objects.select_related("user__wagtail_userprofile"))
+            )
             .order_by("created_at")
         )
         points = {

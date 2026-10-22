@@ -4,13 +4,16 @@ import uuid
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.template.loader import render_to_string
 from django.test import Client, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from wagtail.admin.templatetags.wagtailadmin_tags import avatar_url
 from wagtail.models import Comment, CommentReply, PageSubscription, Revision
 
 from tests.backend.helpers import XHR, blocks, create, url
+from wagtail_live_comments import block_map
 from wagtail_live_comments.comments import PageComments
 from wagtail_live_comments.models import CommentAnchor
 
@@ -432,6 +435,28 @@ def test_config_lists_every_block_and_the_editors_comments(editor_client, editor
     ]
     assert config["currentUser"] == editor.username
     assert config["comments"][str(b["card"].id)][0]["text"] == "On the card."
+
+
+def test_config_queries_do_not_grow_with_comment_authors(editor, live_page):
+    contentpath = block_map.contentpath_for_block(live_page, str(blocks(live_page)["heading"].id))
+
+    def comment_by(username):
+        author = User.objects.create_superuser(username=username, email=f"{username}@example.com", password="x")
+        comment = Comment.objects.create(page=live_page, user=author, text="Hi.", contentpath=contentpath)
+        CommentReply.objects.create(comment=comment, user=author, text="Reply.")
+
+    def queries():
+        with CaptureQueriesContext(connection) as captured:
+            _config(live_page, editor)
+        return len(captured)
+
+    comment_by("author0")
+    queries()  # Caches the viewer's own profile on ``editor``.
+    baseline = queries()
+    for index in range(1, 4):
+        comment_by(f"author{index}")
+
+    assert queries() == baseline
 
 
 def test_config_reads_block_ids_from_the_latest_draft(editor, live_page):

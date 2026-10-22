@@ -7,6 +7,7 @@ on the page is a candidate root, not only ``body``.
 
 from __future__ import annotations
 
+import functools
 import typing as t
 import uuid
 
@@ -20,6 +21,8 @@ from wagtail_block_ids import block_ids, stream_values
 if t.TYPE_CHECKING:
     from wagtail.blocks import BoundBlock
     from wagtail.models import Page
+
+__all__ = ["block_id_from_contentpath", "block_ids", "contentpath_for_block", "top_level_block_id"]
 
 # Editor comment pins attach to FieldBlock widgets, not StreamChild wrappers, so a
 # block's contentpath ends on the first of these fields it has.
@@ -40,13 +43,14 @@ def _label_fields() -> tuple[str, ...]:
     return tuple(getattr(settings, "WAGTAIL_LIVE_COMMENTS_LABEL_FIELDS", DEFAULT_LABEL_FIELDS))
 
 
-__all__ = ["block_id_from_contentpath", "block_ids", "contentpath_for_block", "top_level_block_id"]
+@functools.cache
+def _stream_field_names(model: type[Page]) -> frozenset[str]:
+    return frozenset(field.name for field in model._meta.get_fields() if isinstance(field, StreamField))
 
 
-def stream_field_names(page: Page) -> list[str]:
-    """Names of the StreamFields on ``page``'s specific model."""
-    model = getattr(page, "specific_class", None) or type(page)
-    return [field.name for field in model._meta.get_fields() if isinstance(field, StreamField)]
+def stream_field_names(page: Page) -> frozenset[str]:
+    """Names of the StreamFields on ``page``'s specific model (cached per model)."""
+    return _stream_field_names(getattr(page, "specific_class", None) or type(page))
 
 
 def _as_uuid(part: str) -> str | None:

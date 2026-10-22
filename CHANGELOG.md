@@ -7,6 +7,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- Loading a page's comments no longer runs a query per comment author for avatars,
+  and builds the latest draft once instead of twice.
+
 ## [0.1.0]
 
 ### Added
