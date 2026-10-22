@@ -23,10 +23,13 @@ jobs:
       - name: Build sdist and wheel
         run: uv build
 
+      # Not dist/*: uv build also writes dist/.gitignore, which would ship as an asset.
       - name: Upload dist to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
 
       - name: Upload dist as workflow artifact
         uses: actions/upload-artifact@v6
