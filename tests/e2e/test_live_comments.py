@@ -77,6 +77,29 @@ def test_blocks_missing_from_the_latest_draft_say_why(page, live_server, live_pa
     expect(page.locator("[data-live-page-comment-dialog][open]")).to_have_count(0)
 
 
+def test_targeting_is_exclusive_with_other_block_modes(editor_page):
+    """Inspect (or any wagtail-block-ids mode) turning on ends targeting, and vice versa."""
+    editor_page.evaluate(
+        """() => {
+            window.__modes = [];
+            document.addEventListener("wagtail-block-ids:mode-on", (e) => window.__modes.push(e.detail.source));
+        }"""
+    )
+    editor_page.click("[data-wagtail-userbar-trigger]")
+    editor_page.click("[data-live-page-comment-trigger]")
+
+    expect(editor_page.locator("html[data-live-page-comment-targeting]")).to_have_count(1)
+    assert editor_page.evaluate("window.__modes") == ["wagtail-live-comments"]
+
+    editor_page.evaluate(
+        """() => document.dispatchEvent(new CustomEvent("wagtail-block-ids:mode-on",
+            { detail: { source: "wagtail-inspect" } }))"""
+    )
+
+    expect(editor_page.locator("html[data-live-page-comment-targeting]")).to_have_count(0)
+    expect(editor_page.locator("[data-commentable]")).to_have_count(0)
+
+
 def test_anonymous_visitors_get_a_plain_page(page, live_server, live_page):
     page.goto(f"{live_server.url}{live_page.url}")
 

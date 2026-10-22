@@ -2,6 +2,11 @@
 (function (global) {
   const SELECTABLE = "[data-block-id][data-commentable]";
   const UNAVAILABLE = "[data-block-id][data-comment-unavailable]";
+  // Page modes that highlight blocks (live comments, inspect) are exclusive: each
+  // announces itself on the document and turns off when another one turns on.
+  // Contract documented in wagtail-block-ids.
+  const MODE_ON_EVENT = "wagtail-block-ids:mode-on";
+  const MODE_SOURCE = "wagtail-live-comments";
   const UNAVAILABLE_HINT =
     "Not in the latest draft. Publish or revert the draft to comment on this block.";
   const CONFIG_ID = "wagtail-live-comments-config";
@@ -1199,6 +1204,10 @@
       setTriggerState();
       const blocks = selectableBlocks();
       setStatus(targetingMessage(blocks.length, unavailable.length));
+      const ModeEvent = (doc.defaultView && doc.defaultView.CustomEvent) || global.CustomEvent;
+      if (typeof ModeEvent === "function") {
+        doc.dispatchEvent(new ModeEvent(MODE_ON_EVENT, { detail: { source: MODE_SOURCE } }));
+      }
       log("targeting-on", {
         selectableCount: blocks.length,
         unavailableCount: unavailable.length,
@@ -1767,6 +1776,11 @@
     doc.addEventListener("submit", onReplySubmit);
     doc.addEventListener("submit", onEditSubmit);
     doc.addEventListener("keydown", onDocumentKeydown);
+    doc.addEventListener(MODE_ON_EVENT, (event) => {
+      if (targeting && (!event.detail || event.detail.source !== MODE_SOURCE)) {
+        stopTargeting();
+      }
+    });
     if (mentions) {
       // Capture: picker keys (Enter, Escape, arrows) must not reach the
       // dialog/popover handlers once the picker has used them.
